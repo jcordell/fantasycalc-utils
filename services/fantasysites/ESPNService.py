@@ -299,7 +299,6 @@ class ESPNService(FantasySiteService):
             single_trade.league_settings = self.get_settings(
                 league_id).to_json()
 
-            print(single_trade.to_json())
             trade_data.append(single_trade)
         return trade_data
 

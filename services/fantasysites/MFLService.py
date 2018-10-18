@@ -46,11 +46,6 @@ class MFLService(FantasySiteService):
                 try:
                     new_trade = __reformat_trade__(trade, league_id)
                     new_trade = self.convert_trade_ids_to_names(new_trade)
-
-                    # get settings
-
-                    new_trade.league_settings = self.get_settings(
-                        league_id).to_json()
                     new_trades.append(new_trade)
                 except Exception as e:
                     pass

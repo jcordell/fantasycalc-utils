@@ -14,6 +14,27 @@ class FantasySiteUpdater:
         self._db = get_database()
         self._db.connect()
 
+        self._settings = {}
+
+    '''
+    returns settings datatype for specified league id
+
+    first try to get settings from cache
+    if settings aren't in cache, try to get from database
+      - can skip getting from database if updating all
+    if not in database, go out to api and download the trades
+    '''
+
+    def get_settings(self, league_id):
+        if league_id in self._settings:
+            return self._settings[league_id]
+
+        settings = self._db.get_league_settings(league_id)
+        if settings is None:
+            settings = self.fantasy_service.get_settings(league_id)
+        self._settings[league_id] = settings
+        return settings
+
     # gets valid leagues and updates
     def update_settings(self):
         league_ids = self.fantasy_service.get_valid_leagues()
@@ -32,8 +53,15 @@ class FantasySiteUpdater:
         all_trades = []
         for league_id in tqdm(league_ids):
             try:
-                settings = self.fantasy_service.get_settings(league_id)
+                settings = self.get_settings(league_id)
+                if settings is None:
+                    continue
                 trades = self.fantasy_service.get_trades(league_id)
+
+                # add settings object to each trade
+                for trade in trades:
+                    trade.league_settings = settings.to_json()
+
                 if len(trades) > 0:
                     # update league settings in db
                     self._db.update_league_settings(settings)

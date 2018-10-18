@@ -1,5 +1,6 @@
 from config import LocalHostConfig as config
 from pymongo import MongoClient
+from datatypes.fantasy_league import fantasy_league_dtype
 
 
 class MongoDB:
@@ -18,11 +19,21 @@ class MongoDB:
     def update_league_settings(self, league):
         league_settings = self._db.league_settings
         # put league settings in cache
-        # league_settings.insert_one(league.to_json())
+        league_settings.insert_one(league.to_json())
+        self._cache[league.league_id] = league.to_json()
 
-    def get_league_settings(self, leagueid):
-        if leagueid in self._cache:
-            return self._cache[leagueid]
+    def get_league_settings(self, league_id):
+        # already caching elsewhere...but can't hurt to do it here too?
+        if league_id in self._cache:
+            return self._cache[league_id]
+
+        settings_collection = self._db.league_settings
+        settings = settings_collection.find_one({"league_id": str(league_id)})
+        # settings not found, still return None
+        if settings is None:
+            return None
+        # convert back to league settings datatype object interface
+        return fantasy_league_dtype(settings)
 
     def insert_rankings(self, season_rankings):
         rankings = self._db.rankings
