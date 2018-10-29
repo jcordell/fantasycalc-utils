@@ -32,7 +32,9 @@ class FantasySiteUpdater:
         settings = self._db.get_league_settings(league_id)
         if settings is None:
             settings = self.fantasy_service.get_settings(league_id)
-        self._settings[league_id] = settings
+
+        if settings is not None:
+            self._settings[league_id] = settings
         return settings
 
     # gets valid leagues and updates

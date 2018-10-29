@@ -38,3 +38,7 @@ class MongoDB:
     def insert_rankings(self, season_rankings):
         rankings = self._db.rankings
         rankings.insert_one(season_rankings)
+
+    def get_league_ids(self, site):
+        league_settings = self._db.league_settings
+        return league_settings.distinct('league_id')

@@ -4,7 +4,7 @@ class LocalHostConfig:
     DATABASE_URL = 'localhost'
     UPDATE_TRADES = True
     UPDATE_SETTINGS = False
-    SITES = ['mfl']  # ['mfl']
+    SITES = ['espn', 'mfl']  # ['mfl']
     YEAR = 2018
 
 
