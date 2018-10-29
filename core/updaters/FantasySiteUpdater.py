@@ -60,8 +60,10 @@ class FantasySiteUpdater:
                     continue
                 trades = self.fantasy_service.get_trades(league_id)
 
-                # add settings object to each trade
+                # add settings object to each trade and create unique _id
                 for trade in trades:
+                    trade._id = str(trade.league_id) + '-' + \
+                        str(trade.timestamp)
                     trade.league_settings = settings.to_json()
 
                 if len(trades) > 0:

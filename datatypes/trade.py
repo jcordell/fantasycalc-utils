@@ -6,6 +6,7 @@ class trade_dtype:
         self.side2 = []
         self.all_players = []
         self.timestamp = None
+        self._id = None
         # could duplicate fantasy league object here
         self.league_settings = None
 

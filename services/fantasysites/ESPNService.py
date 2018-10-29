@@ -153,6 +153,7 @@ class ESPNService(FantasySiteService):
         league_settings.num_teams = settings['num_teams']
         league_settings.num_qbs = settings['num_qbs']
         league_settings.ppr = settings['ppr']
+        league_settings.site = 'ESPN'
         self.league_settings[league_id] = league_settings
         return league_settings
 

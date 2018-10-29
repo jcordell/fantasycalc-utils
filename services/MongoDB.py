@@ -14,7 +14,19 @@ class MongoDB:
     def update_league_trades(self, trade_dtype_list):
         trades = self._db.trades
         trades_json = [trade.to_json() for trade in trade_dtype_list]
-        trades.insert_many(trades_json)
+        # update or insert if not exist TODO: would prefer insert if not exists
+        for trade in trades_json:
+            if trade['_id'] is None:
+                raise RuntimeError('Trade does not have an _id')
+
+        try:
+            # semi-hacky insert if not exists
+            # ordered false will try all of them at once
+            # if there is already a trade in the db it will throw an error, but other inserts are still attempted (ordered=false)
+            trades.insert_many(trades_json, ordered=False)
+        except Exception:
+            # assume duplicate key error (which is expected if trade is already in db, don't want to duplicate)
+            pass
 
     def update_league_settings(self, league):
         league_settings = self._db.league_settings
