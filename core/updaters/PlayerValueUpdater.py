@@ -124,7 +124,7 @@ def load_season(num_weeks):
     return season_rankings
 
 
-season_rankings = load_season(7)
+season_rankings = load_season(8)
 print('created rankings')
 # connect to db and insert rankings
 db = MongoDB()

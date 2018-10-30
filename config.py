@@ -1,7 +1,7 @@
 class LocalHostConfig:
     APP_NAME = 'local'
     DATABASE_TYPE = 'mongodb'
-    DATABASE_URL = 'localhost'
+    DATABASE_URL = 'mongodb://jcordell:Usarocks12@ds219191.mlab.com:19191/fantasycalc'
     UPDATE_TRADES = True
     UPDATE_SETTINGS = False
     SITES = ['espn', 'mfl']  # ['mfl']

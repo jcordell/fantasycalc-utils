@@ -1,18 +1,22 @@
 from config import LocalHostConfig as config
 from pymongo import MongoClient
 from datatypes.fantasy_league import fantasy_league_dtype
+import urllib.parse
 
 
 class MongoDB:
     def connect(self, database_url=None):
         if database_url is None:
             database_url = config.DATABASE_URL
-        _client = MongoClient(database_url)
-        self._db = _client.database
+        connection = MongoClient('ds219191.mlab.com', 19191)
+        databasename = 'fantasycalc'
+        self._db = connection[databasename]
+        self._db.authenticate('jcordell', 'Usarocks12')
+        # self._db = _client.database
         self._cache = {}
 
     def update_league_trades(self, trade_dtype_list):
-        trades = self._db.trades
+        trades = self._db.tradesWithId
         trades_json = [trade.to_json() for trade in trade_dtype_list]
         # update or insert if not exist TODO: would prefer insert if not exists
         for trade in trades_json:
@@ -26,6 +30,7 @@ class MongoDB:
             trades.insert_many(trades_json, ordered=False)
         except Exception:
             # assume duplicate key error (which is expected if trade is already in db, don't want to duplicate)
+            print('Error inserting many trades...probably duplicate key')
             pass
 
     def update_league_settings(self, league):
