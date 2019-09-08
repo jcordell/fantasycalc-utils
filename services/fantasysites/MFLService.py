@@ -1,13 +1,13 @@
+import json
+import requests
+import re
+from bs4 import BeautifulSoup
+from datatypes.fantasy_league import fantasy_league_dtype
+from datatypes.trade import trade_dtype
+from services.apis.mfl_api import mfl_api
+from services.fantasysites.FantasySiteService import FantasySiteService
 import sys
 sys.path.append('/Users/jkc023/Documents/homeprojects/fantasycalc-utils/')
-from services.fantasysites.FantasySiteService import FantasySiteService
-from services.apis.mfl_api import mfl_api
-from datatypes.trade import trade_dtype
-from datatypes.fantasy_league import fantasy_league_dtype
-from bs4 import BeautifulSoup
-import re
-import requests
-import json
 
 
 class MFLService(FantasySiteService):
@@ -29,7 +29,7 @@ class MFLService(FantasySiteService):
         for league in soup.find_all('a', href=True):
             league_string = re.escape(str(league))
             if 'Dynasty' in league_string:
-                id = league_string.split("/")[5].split("\\")[0]
+                id = league_string.split("/")[5].split("\\")[0].split("\"")[0]
                 league_id_list.append(id)
         return league_id_list
 
@@ -109,7 +109,7 @@ class MFLService(FantasySiteService):
 
     def __get_id_to_player_dict__(self):
         page = requests.get(
-            "http://www63.myfantasyleague.com/2018/export?TYPE=players&L=11083&W=&JSON=1")
+            "http://www63.myfantasyleague.com/2019/export?TYPE=players&L=11083&W=&JSON=1")
         players_json = json.loads(page.text)
         converter = {}
         for player in players_json['players']['player']:
@@ -136,7 +136,7 @@ class MFLService(FantasySiteService):
                 #     pick_num = '0' + str(pick_num)
                 # else:
                 converted_pick = str(
-                    2018) + ' Round ' + str(round_num) + ' Pick ' + str(pick_num)
+                    2019) + ' Round ' + str(round_num) + ' Pick ' + str(pick_num)
                 pick_id = 'DP_' + str(round_num - 1) + '_' + str(pick_num - 1)
                 pick_converter[pick_id] = converted_pick
 
@@ -196,6 +196,6 @@ def __parse_advanced_settings__(settings):
     }
 
 
-# service = MFLService(2018)
+# service = MFLService(2019)
 # service.get_settings(35465)
 # service.get_settings(10431)

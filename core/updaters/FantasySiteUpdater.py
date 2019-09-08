@@ -44,8 +44,9 @@ class FantasySiteUpdater:
         all_settings = []
         for league_id in league_ids:
             settings = self.fantasy_service.get_settings(league_id)
-            self._db.update_league_settings(settings)
-            all_settings.append(settings)
+            if settings is not None:
+                self._db.update_league_settings(settings)
+                all_settings.append(settings)
         return all_settings
 
     # gets and updates trades for the fantasy site, sending to database and return trade objects

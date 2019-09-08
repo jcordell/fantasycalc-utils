@@ -1,11 +1,10 @@
+import time
 import requests
 import json
 import sys
 import os.path
 libdir = os.path.dirname(__file__)
 sys.path.append(os.path.split(libdir)[0])
-
-import time
 
 
 class mfl_api():
@@ -23,7 +22,7 @@ class mfl_api():
 
         return page.content
 
-    def get_league_trades(self, league_id, year=2018):
+    def get_league_trades(self, league_id, year=2019):
         # be nice to the servers
         time.sleep(1)
 
@@ -51,7 +50,7 @@ class mfl_api():
             print(e)
         return trades_json
 
-    def get_basic_settings(self, league_id, year=2018):
+    def get_basic_settings(self, league_id, year=2019):
         settings_url = "http://www.myfantasyleague.com/" + \
             str(year) + "/export?TYPE=league&L=" + \
             str(league_id) + "&APIKEY=&JSON=1"
@@ -66,7 +65,7 @@ class mfl_api():
             print('unable to get settings for', league_id)
             print(e)
 
-    def get_advanced_settings(self, league_id, year=2018):
+    def get_advanced_settings(self, league_id, year=2019):
         settings_url = 'http://www.myfantasyleague.com/' + \
             str(year) + '/export?TYPE=rules&L=' + str(league_id) + '&JSON=1'
         try:
