@@ -1,15 +1,21 @@
 import sys
-sys.path.append('/Users/jkc023/Documents/homeprojects/fantasycalc-utils/')
-from services.fantasysites.FantasySiteService import FantasySiteService
-from services.apis.mfl_api import mfl_api
-from datatypes.trade import trade_dtype
-from datatypes.fantasy_league import fantasy_league_dtype
-from bs4 import BeautifulSoup
-import re
-import requests
-import json
-import time
 from services.MongoDB import MongoDB
+import time
+import json
+import requests
+import re
+from bs4 import BeautifulSoup
+from datatypes.fantasy_league import fantasy_league_dtype
+from datatypes.trade import trade_dtype
+from services.apis.mfl_api import mfl_api
+from services.fantasysites.FantasySiteService import FantasySiteService
+from ff_espn_api import League
+sys.path.append('/Users/jcordell/code/fantasycalc-utils/')
+
+
+class NumStartersIndex:
+    qb = '0'
+    super_flex = None  # TODO: get superflex position (OP)
 
 
 class ESPNService(FantasySiteService):
@@ -23,8 +29,8 @@ class ESPNService(FantasySiteService):
 
     def __init__(self, year):
         self.year = year
-        self._db = MongoDB()
-        self._db.connect()
+        # self._db = MongoDB()
+        # self._db.connect()
 
     def make_trade(self, trade_columns):
         team1 = None
@@ -116,46 +122,44 @@ class ESPNService(FantasySiteService):
         if league_id in self.league_settings:
             return self.league_settings[league_id]
 
-        league_settings = fantasy_league_dtype()
+        url = "https://fantasy.espn.com/apis/v3/games/ffl/seasons/2019/segments/0/leagues/" + str(league_id) + \
+            "?rosterForTeamId=1&scoringPeriodId=1&view=mDraftDetail&view=mLiveScoring&view=mMatchupScore&view=mPendingTransactions&view=mPositionalRatings&view=mRoster&view=mSettings&view=mTeam&view=modular&view=mNav"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            raw_settings = json.loads(response.text)
+            return self.parse_settings(raw_settings, league_id)
+        except:
+            return None
 
-        url = 'http://games.espn.com/ffl/leaguesetup/settings?leagueId=' + \
-            str(league_id)
-        page = requests.get(url)
+    def parse_scoring_setting(self, settings_list, scoring_setting_id):
+        for setting in settings_list:
+            if setting['statId'] == scoring_setting_id:
+                if setting['points'] is not None:
+                    return setting['points']
+                else:
+                    return 0
 
-        soup = BeautifulSoup(page.text, 'lxml')
-
-        tables = soup.find_all('table', attrs={'class': 'leagueSettingsTable'})
-
-        settings = {}
-        league_settings.league_id = league_id
-        # PPR scoring defaults to 0, since ESPN does not display this setting if it is 0
-        settings['ppr'] = 0
-
-        for table in tables:
-            rows = table.find_all('tr')
-
-            for row in rows:
-                cols = row.find_all('td')
-                cols = [ele.text.strip() for ele in cols]
-
-                # add to settings dictionary if setting is needed
-                if cols[0] in self.basic_settings:
-                    settings[self.basic_settings[cols[0]]] = cols[1]
-
-                # check if any advanced settings are in string
-                for setting in self.advanced_settings:
-                    if setting in cols:
-                        settings[self.advanced_settings[setting]
-                                 ] = cols[cols.index(setting) + 1]
-
-        settings['league_id'] = league_id
-        league_settings.name = settings['name']
-        league_settings.num_teams = settings['num_teams']
-        league_settings.num_qbs = settings['num_qbs']
-        league_settings.ppr = settings['ppr']
-        league_settings.site = 'ESPN'
-        self.league_settings[league_id] = league_settings
-        return league_settings
+    def parse_settings(self, league, league_id):
+        espn_setting_ids = {
+            'ppr': 53
+        }
+        settings = league['settings']
+        scoring_settings = settings['scoringSettings']['scoringItems']
+        ppr = self.parse_scoring_setting(
+            scoring_settings, espn_setting_ids['ppr'])
+        num_teams = settings['size']
+        name = settings['name']
+        roster_settings = settings['rosterSettings']
+        num_qbs = roster_settings['lineupSlotCounts'][NumStartersIndex.qb]
+        return fantasy_league_dtype({
+            'name': name,
+            'num_teams': num_teams,
+            'league_id': league_id,
+            'ppr': ppr,
+            'num_qbs': num_qbs,
+            'site': 'ESPN'
+        })
 
     def get_valid_leagues(self, fast_search=False):
         if fast_search:
@@ -163,22 +167,19 @@ class ESPNService(FantasySiteService):
             raise NotImplementedError
         else:
             # return [841145]
-            # return range(841145, 1726141)
+            return range(841145 + 108634, 1726141)
             # return range(930430, 1726141)
             # updated this after college lib
             # return range(1264529 + 35533 + 16262 + 8772, 1726141)
-            league_ids = self._db.get_league_ids('ESPN')
-            print(league_ids)
-            print(len(league_ids))
-            return league_ids
+            # league_ids = self._db.get_league_ids('ESPN')
+            # print(league_ids)
+            # print(len(league_ids))
+            # return league_ids
 
 
 # espn = ESPNService()
-# # print(espn.get_settings(842623))
+# print(espn.get_settings(842623))
 # print(espn.get_trades(841145))
 # print(espn.get_settings(841145))
-
-
-# service = MFLService(2018)
-# service.get_settings(35465)
-# service.get_settings(10431)
+# league = League(841145, 2019)
+# print(league)

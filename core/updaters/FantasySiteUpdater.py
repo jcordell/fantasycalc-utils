@@ -31,7 +31,10 @@ class FantasySiteUpdater:
 
         settings = self._db.get_league_settings(league_id)
         if settings is None:
-            settings = self.fantasy_service.get_settings(league_id)
+            try:
+                settings = self.fantasy_service.get_settings(league_id)
+            except:
+                settings = None
 
         if settings is not None:
             self._settings[league_id] = settings
@@ -42,7 +45,7 @@ class FantasySiteUpdater:
         league_ids = self.fantasy_service.get_valid_leagues()
 
         all_settings = []
-        for league_id in league_ids:
+        for league_id in tqdm(league_ids):
             settings = self.fantasy_service.get_settings(league_id)
             if settings is not None:
                 self._db.update_league_settings(settings)

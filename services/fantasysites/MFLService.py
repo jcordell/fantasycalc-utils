@@ -22,8 +22,7 @@ class MFLService(FantasySiteService):
     setting to false would search for all dynasty leagues
     '''
 
-    def get_valid_leagues(self, fast_search=True):
-        league_page = self.mfl_api.get_league_id_page()
+    def __parse_league_ids_from_page__(self, league_page):
         soup = BeautifulSoup(league_page, 'html.parser')
         league_id_list = []
         for league in soup.find_all('a', href=True):
@@ -31,7 +30,19 @@ class MFLService(FantasySiteService):
             if 'Dynasty' in league_string:
                 id = league_string.split("/")[5].split("\\")[0].split("\"")[0]
                 league_id_list.append(id)
+        print("found", len(league_id_list))
         return league_id_list
+
+    def get_valid_leagues(self, fast_search=True):
+        parsed_league_ids = []
+
+        for search_term in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', 'league', 'a', 'b']:
+            page = self.mfl_api.get_league_id_page(str(search_term))
+            league_ids = self.__parse_league_ids_from_page__(page)
+            parsed_league_ids.extend(league_ids)
+            print('parsed_league_ids', len(parsed_league_ids))
+
+        return list(set(parsed_league_ids))
 
     def get_trades(self, league_id):
         # download the page from mfl
@@ -65,6 +76,11 @@ class MFLService(FantasySiteService):
                 league.num_teams = int(
                     basic_settings['league']['franchises']['count'])
                 league.name = basic_settings['league']['name'].lstrip()
+                try:
+                    league.keepers = int(
+                        basic_settings['league']['maxKeepers'])
+                except:
+                    league.keepers = None
 
                 # startings qbs formatted as '0-1'
                 starting_qbs_string = basic_settings['league']['starters']['position'][0]['limit']

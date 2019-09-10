@@ -8,11 +8,11 @@ sys.path.append(os.path.split(libdir)[0])
 
 
 class mfl_api():
-    def get_league_id_page(self):
+    def get_league_id_page(self, searchTerm, year=str(2019)):
         page = None
         try:
             page = requests.get(
-                "http://www03.myfantasyleague.com/2017/index?YEAR=2017&SEARCH=dynasty&submit=Go")
+                "http://www03.myfantasyleague.com/" + year + "/index?YEAR=" + year + "&SEARCH=" + searchTerm + "&submit=Go")
 
             # check that page downloaded correctly
             if str(page.status_code)[0] != str(2):
