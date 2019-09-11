@@ -22,6 +22,24 @@ class fleaflicker_api():
         response.raise_for_status()
         return response.content
 
+    def get_rules(self, league_id):
+        response = requests.get(self.base_url + "/" +
+                                str(league_id) + "/rules")
+        response.raise_for_status()
+        return response.content
+
+    def get_teams(self, league_id):
+        response = requests.get(self.base_url + '/' +
+                                str(league_id) + '/teams')
+        response.raise_for_status()
+        return response.content
+
+    def get_scoring(self, league_id):
+        response = requests.get(self.base_url + "/" +
+                                str(league_id) + "/scoring")
+        response.raise_for_status()
+        return response.content
+
 
 class FleaflickerConverter():
     trade_teamname_converter = {}
@@ -108,6 +126,36 @@ class FleaflickerConverter():
         except ValueError:
             return ""
 
+    def parse_rules(self, raw_html):
+        def parse_league_type(text):
+            if 'Keepers' in text:
+                return True
+            else:
+                return False
+        soup = BeautifulSoup(raw_html, "html.parser")
+        name = soup.find('meta', property="og:title")['content']
+        dynasty = parse_league_type(soup.text)
+
+        rules = soup.find_all('span', {'class': 'position tt-content'})
+        num_qbs = int(rules[0].find_previous_sibling('strong').text)
+        num_superflex = int(rules[3].find_previous_sibling('strong').text)
+        num_qbs += num_superflex
+        return name, dynasty, num_qbs
+
+    def parse_num_teams(self, raw_html):
+        soup = BeautifulSoup(raw_html, "html.parser")
+        return len(soup.find_all('span', {'class': 'league-name'}))
+
+    def parse_ppr(self, raw_html):
+        soup = BeautifulSoup(raw_html, "html.parser")
+        # soup.find('h3', string='Receiving')
+        scoring = soup.find_all('td')
+        ppr = 0
+        for score in scoring:
+            if 'for every Catch' in score.text:
+                ppr = score.text.split(' ')[0]
+        return ppr
+
 
 class FleaflickerService():
     client = fleaflicker_api()
@@ -116,18 +164,29 @@ class FleaflickerService():
     def get_trades(self, league_id):
         raw_response = self.client.get_trades(league_id)
         trades, offset = self.converter.toTrades(raw_response)
-        print('og offset', offset)
         while True:
             raw_response = self.client.get_trades(league_id, offset)
             trades, paged_items = self.converter.toTrades(raw_response, trades)
             offset += paged_items
 
             if paged_items == 0:
-                print('done!')
                 break
-            print(offset)
-        print(trades)
+        return trades
+
+    def get_settings(self, league_id):
+        raw_response = self.client.get_rules(league_id)
+        name, is_dynasty, num_qbs = self.converter.parse_rules(raw_response)
+
+        raw_response = self.client.get_teams(league_id)
+        num_teams = self.converter.parse_num_teams(raw_response)
+
+        raw_response = self.client.get_scoring(league_id)
+        ppr = self.converter.parse_ppr(raw_response)
+        print(name, is_dynasty, num_qbs, num_teams, ppr)
 
 
 service = FleaflickerService()
-service.get_trades(138415)
+service.get_settings(138415)
+
+redraft_league_id = 58521
+# service.get_settings(redraft_league_id)
