@@ -13,6 +13,7 @@ class fantasy_league_dtype:
             self.num_qbs = league['num_qbs']
             self.ppr = league['ppr']
             self.keepers = league['keepers']
+            self.is_dynasty = league['is_dynasty']
         else:
             self.name = None
             self.league_id = None
@@ -21,6 +22,7 @@ class fantasy_league_dtype:
             self.num_qbs = None
             self.ppr = None
             self.keepers = None
+            self.is_dynasty = None
 
     def to_json(self):
         return self.__dict__

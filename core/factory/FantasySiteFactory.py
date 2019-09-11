@@ -1,9 +1,11 @@
 from services.fantasysites.MFLService import MFLService
 from services.fantasysites.ESPNService import ESPNService
+from services.fantasysites.FleaflickerService import FleaflickerService
 
 apis = {
     'mfl': MFLService,
-    'espn': ESPNService
+    'espn': ESPNService,
+    'fleaflicker': FleaflickerService
 }
 
 

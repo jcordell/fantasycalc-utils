@@ -15,6 +15,7 @@ class FantasySiteUpdater:
         self._db.connect()
 
         self._settings = {}
+        self.site = fantasy_site
 
     '''
     returns settings datatype for specified league id
@@ -29,7 +30,8 @@ class FantasySiteUpdater:
         if league_id in self._settings:
             return self._settings[league_id]
 
-        settings = self._db.get_league_settings(league_id)
+        settings = self._db.get_league_settings(
+            self.site + '-' + str(league_id))
         if settings is None:
             try:
                 settings = self.fantasy_service.get_settings(league_id)
@@ -47,6 +49,7 @@ class FantasySiteUpdater:
         all_settings = []
         for league_id in tqdm(league_ids):
             settings = self.fantasy_service.get_settings(league_id)
+            settings.league_id = settings.site + '-' + str(league_id)
             if settings is not None:
                 self._db.update_league_settings(settings)
                 all_settings.append(settings)

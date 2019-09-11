@@ -11,6 +11,9 @@ import time
 import json
 import codecs
 import unicodedata
+from services.fantasysites.FantasySiteService import FantasySiteService
+from datatypes.fantasy_league import fantasy_league_dtype
+from datatypes.trade import trade_dtype
 
 
 class fleaflicker_api():
@@ -57,9 +60,23 @@ class FleaflickerConverter():
             trade_id = trade_url[1]['href'].split("/")[-1]
             trades, finished = self.add_to_trade(
                 trades, trade_id, traded, str(team1), str(team2), trade_string)
+
             if finished:
-                return trades, 0
+                return trades,  0
         return trades, len(player_divs)
+
+    def to_fantasycalc_trades(self, trades, league_id):
+        fc_trades = []
+        for trade_id in trades:
+            fc_trade = trade_dtype()
+            fc_trade.league_id = league_id
+            fc_trade.side1 = trades[trade_id]['side1']
+            fc_trade.side2 = trades[trade_id]['side2']
+            fc_trade.fantasy_site = 'fleaflicker'
+            fc_trade.timestamp = trades[trade_id]['date']
+            fc_trade.all_players = fc_trade.side1.extend(fc_trade.side2)
+            fc_trades.append(fc_trade)
+        return fc_trades
 
     def remove_special_chars(self, s):
         return unicodedata.normalize('NFKD', s)
@@ -128,10 +145,8 @@ class FleaflickerConverter():
 
     def parse_rules(self, raw_html):
         def parse_league_type(text):
-            if 'Keepers' in text:
-                return True
-            else:
-                return False
+            return 'Keepers' in text
+
         soup = BeautifulSoup(raw_html, "html.parser")
         name = soup.find('meta', property="og:title")['content']
         dynasty = parse_league_type(soup.text)
@@ -157,9 +172,13 @@ class FleaflickerConverter():
         return ppr
 
 
-class FleaflickerService():
+class FleaflickerService(FantasySiteService):
+    site = 'fleaflicker'
     client = fleaflicker_api()
     converter = FleaflickerConverter()
+
+    def __init__(self, year):
+        self.year = year
 
     def get_trades(self, league_id):
         raw_response = self.client.get_trades(league_id)
@@ -171,22 +190,38 @@ class FleaflickerService():
 
             if paged_items == 0:
                 break
-        return trades
+        return self.converter.to_fantasycalc_trades(trades, league_id)
 
     def get_settings(self, league_id):
-        raw_response = self.client.get_rules(league_id)
-        name, is_dynasty, num_qbs = self.converter.parse_rules(raw_response)
+        try:
+            raw_response = self.client.get_rules(league_id)
+            name, is_dynasty, num_qbs = self.converter.parse_rules(
+                raw_response)
 
-        raw_response = self.client.get_teams(league_id)
-        num_teams = self.converter.parse_num_teams(raw_response)
+            raw_response = self.client.get_teams(league_id)
+            num_teams = self.converter.parse_num_teams(raw_response)
 
-        raw_response = self.client.get_scoring(league_id)
-        ppr = self.converter.parse_ppr(raw_response)
-        print(name, is_dynasty, num_qbs, num_teams, ppr)
+            raw_response = self.client.get_scoring(league_id)
+            ppr = self.converter.parse_ppr(raw_response)
+
+            settings = fantasy_league_dtype()
+            settings.name = name
+            settings.is_dynasty = is_dynasty
+            settings.num_teams = num_teams
+            settings.num_qbs = num_qbs
+            settings.ppr = float(ppr)
+            settings.site = 'fleaflicker'
+            return settings
+        except:
+            return None
+
+    def get_valid_leagues(self, fast_search=True):
+        # return range(50000 + 166, 500000)
+        return [138415]
 
 
-service = FleaflickerService()
-service.get_settings(138415)
+# service = FleaflickerService()
+# service.get_settings(138415)
 
-redraft_league_id = 58521
+# redraft_league_id = 58521
 # service.get_settings(redraft_league_id)

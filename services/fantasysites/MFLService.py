@@ -65,13 +65,13 @@ class MFLService(FantasySiteService):
 
     def get_settings(self, league_id):
         if league_id in self._cache:
-            return self._cache[league_id]
+            return self._cache['mfl-' + str(league_id)]
         else:
             league = fantasy_league_dtype()
             # MFL split league settings into 2 endpoints
             try:
                 basic_settings = self.mfl_api.get_basic_settings(league_id)
-                league.league_id = league_id
+                league.league_id = 'mfl-' + str(league_id)
                 league.site = 'mfl'
                 league.num_teams = int(
                     basic_settings['league']['franchises']['count'])
