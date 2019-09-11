@@ -66,7 +66,7 @@ class FantasySiteUpdater:
 
                 # add settings object to each trade and create unique _id
                 for trade in trades:
-                    trade._id = str(trade.league_id) + '-' + \
+                    trade._id = trade.fantasy_site + '-' + str(trade.league_id) + '-' + \
                         str(trade.timestamp)
                     trade.league_settings = settings.to_json()
 
